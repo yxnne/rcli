@@ -1,13 +1,56 @@
 use std::path::Path;
 
 use clap::Parser;
+use csv::Reader;
+use serde::{Deserialize, Serialize};
 
-/// cargo add clap --features derive (只使用这个feature，clap：https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html)
-fn main() {
-    let opts = Opts::parse();
-    println!("{:?}", opts);
+#[derive(Debug, Deserialize, Serialize)]
+struct Player {
+    #[serde(rename = "Name")]
+    name: String,
+
+    #[serde(rename = "Position")]
+    position: String,
+
+    #[serde(rename = "DOB")]
+    dob: String,
+
+    #[serde(rename = "Nationality")]
+    nationality: String,
+
+    #[serde(rename = "Kit Number")]
+    kit: u8,
 }
 
+/// cargo add clap --features derive (只使用这个feature，clap：https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html)
+fn main() -> anyhow::Result<()> {
+    let opts = Opts::parse();
+    println!("{:?}", opts);
+    match opts.cmd {
+        Subcommand::Csv(opt) => {
+            let mut reader = Reader::from_path(opt.input)?;
+            // ? 相当于做了match
+            // match reader {
+            //     Ok(v) => ...
+            //     Err(e) => return Err(e.into()),
+            // }
+
+            for result in reader.deserialize() {
+                let record: Player = result?;
+                println!("{:?}", record);
+            }
+
+            // let records = reader
+            //     .deserialize()
+            //     .map(|result| result.unwrap())
+            //     .collect::<Vec<Player>>();
+
+            // println!("{:?}", records);
+        }
+    }
+
+    Ok(())
+}
 #[derive(Debug, Parser)]
 #[command(name = "rcli", about = "A simple command line tool", version, author)]
 struct Opts {
