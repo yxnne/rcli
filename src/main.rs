@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use clap::Parser;
 
 /// cargo add clap --features derive (只使用这个feature，clap：https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html)
@@ -21,7 +23,7 @@ enum Subcommand {
 
 #[derive(Debug, Parser)]
 struct CsvOpts {
-    #[arg(short, long, help = "Input csv file")]
+    #[arg(short, long, help = "Input csv file", value_parser = verify_input_file)]
     input: String,
 
     #[arg(short, long, help = "Output json file", default_value = "output.json")]
@@ -33,4 +35,13 @@ struct CsvOpts {
 
     #[arg(short, long, help = "Delimiter", default_value_t = ',')]
     delimiter: char,
+}
+
+/// 验证文件是否存在
+fn verify_input_file(file_name: &str) -> Result<String, &'static str> {
+    if Path::new(file_name).exists() {
+        Ok(file_name.into())
+    } else {
+        Err("Input file does not exist")
+    }
 }
