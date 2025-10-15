@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
 use clap::Parser;
 use csv::Reader;
@@ -35,11 +35,16 @@ fn main() -> anyhow::Result<()> {
             //     Err(e) => return Err(e.into()),
             // }
 
+            let mut ret = Vec::with_capacity(128);
             for result in reader.deserialize() {
                 let record: Player = result?;
-                println!("{:?}", record);
+                // println!("{:?}", record);
+                ret.push(record);
             }
 
+            let json = serde_json::to_string_pretty(&ret)?;
+
+            fs::write(opt.output, json)?;
             // let records = reader
             //     .deserialize()
             //     .map(|result| result.unwrap())
