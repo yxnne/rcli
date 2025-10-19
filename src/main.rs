@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use rcli::{process_csv, Opts, Subcommand};
+use rcli::{process_csv, process_genpass, Opts, Subcommand};
 
 /// cargo add clap --features derive (只使用这个feature，clap：https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html)
 fn main() -> anyhow::Result<()> {
@@ -24,6 +24,17 @@ fn main() -> anyhow::Result<()> {
                 format!("output.{}", opts.format)
             };
             process_csv(&opts.input, output, opts.format)?;
+        }
+
+        // 调试eg: cargo run genpass --length 16
+        Subcommand::GenPass(opts) => {
+            process_genpass(
+                opts.length,
+                opts.uppercase,
+                opts.lowercase,
+                opts.number,
+                opts.symbol,
+            )?;
         }
     }
 
