@@ -1,5 +1,8 @@
 use clap::Parser;
-use std::{fmt, path::Path, str::FromStr};
+use std::{fmt, str::FromStr};
+
+// use crate::cli::verify_input_file;
+use super::verify_input_file;
 
 #[derive(Debug, Parser)]
 pub struct CsvOpts {
@@ -18,15 +21,6 @@ pub struct CsvOpts {
 
     #[arg(short, long, help = "Delimiter", default_value_t = ',')]
     pub delimiter: char,
-}
-
-/// 验证文件是否存在
-fn verify_input_file(file_name: &str) -> Result<String, &'static str> {
-    if Path::new(file_name).exists() {
-        Ok(file_name.into())
-    } else {
-        Err("Input file does not exist")
-    }
 }
 
 #[derive(Debug, Clone, Copy)]

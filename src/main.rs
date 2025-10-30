@@ -1,6 +1,9 @@
 use clap::Parser;
 
-use rcli::{process_csv, process_genpass, Opts, Subcommand};
+use rcli::{
+    process_csv, process_decode, process_encode, process_genpass, Base64SubCommand, Opts,
+    Subcommand,
+};
 
 /// cargo add clap --features derive (只使用这个feature，clap：https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html)
 fn main() -> anyhow::Result<()> {
@@ -36,6 +39,22 @@ fn main() -> anyhow::Result<()> {
                 opts.symbol,
             )?;
         }
+
+        // base64
+        // cargo run -- base64 encode 自己输入 回车 后 ctrl + D 退出
+        // cargo run -- base64 encode --format urlsafe -i Cargo.toml
+        Subcommand::Base64(opts) => match opts {
+            Base64SubCommand::Encode(opts) => {
+                // process_base64_encode(&opts.input)?;
+                println!("encode {}", opts.input);
+                process_encode(&opts.input, opts.format)?;
+            }
+            Base64SubCommand::Decode(opts) => {
+                // process_base64_decode(&opts.input)?;
+                println!("decode {}", opts.input);
+                process_decode(&opts.input, opts.format)?;
+            }
+        },
     }
 
     Ok(())
