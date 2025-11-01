@@ -55,20 +55,19 @@ pub fn process_decode(input: &str, format: Base64Format) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    // use super::*;
+    use super::*;
 
-    // #[test]
-    // fn test_encode() {
-    //     let input = "hello world";
-    //     let encoded = process_encode(input, Base64Format::Standard).unwrap();
-    //     // assert_eq!(encoded, ());
-    //     // assert_eq!(encoded, "aGVsbG8gd29ybGQ=");
-    // }
+    #[test]
+    fn test_process_encode() {
+        let input = "Cargo.toml";
+        let format = Base64Format::Standard;
+        assert!(process_encode(input, format).is_ok());
+    }
 
-    // #[test]
-    // fn test_decode() {
-    //     let input = "aGVsbG8gd29ybGQ=";
-    //     let decoded = process_decode(input, Base64Format::Standard).unwrap();
-    //     // assert_eq!(decoded, "hello world");
-    // }
+    #[test]
+    fn test_process_decode() {
+        let input = "fixtures/b64.txt";
+        let format = Base64Format::UrlSafe;
+        process_decode(input, format).unwrap();
+    }
 }

@@ -60,17 +60,16 @@ fn verify_input_file(file_name: &str) -> Result<String, &'static str> {
 // - 减小二进制文件大小 ：测试代码不会被编译到发布版本中
 // - 避免依赖冲突 ：测试专用的依赖不会影响生产代码
 // - 组织清晰 ：明确区分测试代码和业务代码
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_verify_input_file() {
-        assert_eq!(verify_input_file("-"), Ok("-".to_string()));
+        assert_eq!(verify_input_file("-"), Ok("-".into()));
         assert_eq!(verify_input_file("*"), Err("File does not exist"));
-        assert_eq!(
-            verify_input_file("cargo.toml"),
-            Ok("cargo.toml".to_string())
-        );
+        assert_eq!(verify_input_file("Cargo.toml"), Ok("Cargo.toml".into()));
+        assert_eq!(verify_input_file("not-exist"), Err("File does not exist"));
     }
 }
