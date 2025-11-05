@@ -1,8 +1,8 @@
 use clap::Parser;
 
 use rcli::{
-    process_csv, process_decode, process_encode, process_genpass, Base64SubCommand, Opts,
-    Subcommand,
+    process_csv, process_decode, process_encode, process_genpass, process_text_sign,
+    process_text_verify, Base64SubCommand, Opts, Subcommand, TextSubCommand,
 };
 
 /// cargo add clap --features derive (只使用这个feature，clap：https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html)
@@ -53,6 +53,18 @@ fn main() -> anyhow::Result<()> {
                 // process_base64_decode(&opts.input)?;
                 println!("decode {}", opts.input);
                 process_decode(&opts.input, opts.format)?;
+            }
+        },
+
+        // text 文本加密
+        // eg: cargo run -- text sign -k fixtures/black3.txt
+        Subcommand::Text(opts) => match opts {
+            TextSubCommand::Sign(opts) => {
+                process_text_sign(&opts.input, &opts.key, opts.format)?;
+            }
+
+            TextSubCommand::Verify(opts) => {
+                process_text_verify(&opts.input, &opts.key, opts.format, &opts.signature)?;
             }
         },
     }
