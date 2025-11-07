@@ -4,12 +4,19 @@ use anyhow::Result;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 
-use crate::{get_reader, TextSignFormat};
+use crate::{get_reader, process_genpass, TextSignFormat};
 
 pub trait KeyLoader {
     fn load(path: impl AsRef<Path>) -> Result<Self>
     where
         Self: Sized; // Sized 是为了限制 Self 必须是具体类型，而不是 trait 对象
+}
+
+pub trait KeyGenerator {
+    // 一对 key 和一个key 统一
+    // ed25519 生成一对key
+    // black3 生成一个key
+    fn generate() -> Result<Vec<Vec<u8>>>;
 }
 
 pub trait TextSign {
@@ -57,6 +64,24 @@ impl KeyLoader for Ed25519Signer {
     fn load(path: impl AsRef<Path>) -> Result<Self> {
         let key = fs::read(path)?;
         Self::try_new(&key)
+    }
+}
+
+impl KeyGenerator for Black3 {
+    fn generate() -> Result<Vec<Vec<u8>>> {
+        let key = process_genpass(32, true, true, true, true)?;
+        let key = key.as_bytes().into();
+        Ok(vec![key])
+    }
+}
+
+impl KeyGenerator for Ed25519Signer {
+    fn generate() -> Result<Vec<Vec<u8>>> {
+        let secret: [u8; 32] = rand::random();
+        let sk = SigningKey::from_bytes(&secret);
+        let pk = sk.verifying_key().to_bytes().to_vec();
+        let sk = sk.to_bytes().to_vec();
+        Ok(vec![sk, pk])
     }
 }
 
@@ -140,7 +165,7 @@ impl TextVerify for Ed25519Signer {
     }
 }
 
-pub fn process_text_sign(input: &str, key: &str, format: TextSignFormat) -> Result<()> {
+pub fn process_text_sign(input: &str, key: &str, format: TextSignFormat) -> Result<String> {
     let mut reader = get_reader(input)?;
 
     let mut buf = Vec::new();
@@ -158,9 +183,9 @@ pub fn process_text_sign(input: &str, key: &str, format: TextSignFormat) -> Resu
         }
     };
     let signed = URL_SAFE_NO_PAD.encode(&signed);
-    println!("{}", signed);
+    // println!("{}", signed);
 
-    Ok(())
+    Ok(signed)
 }
 
 pub fn process_text_verify(
@@ -168,7 +193,7 @@ pub fn process_text_verify(
     key: &str,
     format: TextSignFormat,
     signature: &str,
-) -> Result<()> {
+) -> Result<bool> {
     let mut reader = get_reader(input)?;
     let signature = URL_SAFE_NO_PAD.decode(signature)?;
     let verify = match format {
@@ -181,8 +206,15 @@ pub fn process_text_verify(
             verifier.verify(&mut reader, &signature)?
         }
     };
-    println!("{}", verify);
-    Ok(())
+    // println!("{}", verify);
+    Ok(verify)
+}
+
+pub fn process_text_generate_keye(format: TextSignFormat) -> Result<Vec<Vec<u8>>> {
+    match format {
+        TextSignFormat::Black3 => Black3::generate(),
+        TextSignFormat::Ed25519 => Ed25519Signer::generate(),
+    }
 }
 
 #[cfg(test)]
@@ -196,6 +228,18 @@ mod test {
 
         let signature = black3.sign(&mut data.as_slice())?;
         let verify = black3.verify(&mut data.as_slice(), &signature)?;
+        assert!(verify);
+        Ok(())
+    }
+
+    #[test]
+    fn test_ed25519_text_sign_verify() -> Result<()> {
+        let sk = Ed25519Signer::load("fixtures/ed25519.sk")?;
+        let pk = Ed25519Verifier::load("fixtures/ed25519.pk")?;
+        let data = b"hello world";
+
+        let signature = sk.sign(&mut data.as_slice())?;
+        let verify = pk.verify(&mut data.as_slice(), &signature)?;
         assert!(verify);
         Ok(())
     }

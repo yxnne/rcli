@@ -1,9 +1,13 @@
+use std::fs;
+
 use clap::Parser;
 
 use rcli::{
-    process_csv, process_decode, process_encode, process_genpass, process_text_sign,
-    process_text_verify, Base64SubCommand, Opts, Subcommand, TextSubCommand,
+    process_csv, process_decode, process_encode, process_genpass, process_text_generate_keye,
+    process_text_sign, process_text_verify, Base64SubCommand, Opts, Subcommand, TextSignFormat,
+    TextSubCommand,
 };
+use zxcvbn::zxcvbn;
 
 /// cargo add clap --features derive (只使用这个feature，clap：https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html)
 fn main() -> anyhow::Result<()> {
@@ -31,13 +35,17 @@ fn main() -> anyhow::Result<()> {
 
         // 调试eg: cargo run genpass --length 16
         Subcommand::GenPass(opts) => {
-            process_genpass(
+            let pwd = process_genpass(
                 opts.length,
                 opts.uppercase,
                 opts.lowercase,
                 opts.number,
                 opts.symbol,
             )?;
+            println!("生成密码: {}", pwd);
+            // 输出强度信息
+            let estimate = zxcvbn(&pwd, &[]);
+            eprintln!("强度评估: {}", estimate.score());
         }
 
         // base64
@@ -46,25 +54,57 @@ fn main() -> anyhow::Result<()> {
         Subcommand::Base64(opts) => match opts {
             Base64SubCommand::Encode(opts) => {
                 // process_base64_encode(&opts.input)?;
-                println!("encode {}", opts.input);
-                process_encode(&opts.input, opts.format)?;
+                // println!("encode {}", opts.input);
+                let encoded = process_encode(&opts.input, opts.format)?;
+                println!("{}", encoded);
             }
             Base64SubCommand::Decode(opts) => {
                 // process_base64_decode(&opts.input)?;
-                println!("decode {}", opts.input);
-                process_decode(&opts.input, opts.format)?;
+                // println!("decode {}", opts.input);
+                let decoded = process_decode(&opts.input, opts.format)?;
+                let decoded = String::from_utf8(decoded)?;
+                println!("{}", decoded);
             }
         },
 
         // text 文本加密
         // eg: cargo run -- text sign -k fixtures/black3.txt
+        // eg: cargo run -- text verify -k fixtures/black3.txt --signature p5s9akpKJuDYUH96WfJKbRekgIsRRveVPy0aEHu-14o
+        // eg: cargo run -- text generate -o fixtures
+        // eg: cargo run -- text generate -o fixtures -f ed25519
         Subcommand::Text(opts) => match opts {
             TextSubCommand::Sign(opts) => {
-                process_text_sign(&opts.input, &opts.key, opts.format)?;
+                let signed = process_text_sign(&opts.input, &opts.key, opts.format)?;
+                println!("{}", signed);
             }
 
             TextSubCommand::Verify(opts) => {
-                process_text_verify(&opts.input, &opts.key, opts.format, &opts.signature)?;
+                let verify =
+                    process_text_verify(&opts.input, &opts.key, opts.format, &opts.signature)?;
+                println!("{}", verify);
+            }
+
+            TextSubCommand::Generate(opts) => {
+                // let key = process_text_generate_key(opts.format)?;
+                // println!("{}", key);
+                let key = process_text_generate_keye(opts.format)?;
+                // println!("{}", key);
+
+                match opts.format {
+                    TextSignFormat::Black3 => {
+                        let name = opts.output.join("black3.txt");
+                        fs::write(name, &key[0])?;
+                        // let key = Black3::new(key);
+                        // println!("{}", key.key);
+                    }
+                    TextSignFormat::Ed25519 => {
+                        let name = &opts.output;
+                        fs::write(name.join("ed25519.sk"), &key[0])?;
+                        fs::write(name.join("ed25519.pk"), &key[1])?;
+                        // let key = Ed25519Signer::new(key);
+                        // println!("{}", key.key);
+                    }
+                }
             }
         },
     }

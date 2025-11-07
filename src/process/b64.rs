@@ -5,7 +5,7 @@ use base64::{
 
 use crate::{get_reader, Base64Format};
 
-pub fn process_encode(input: &str, format: Base64Format) -> anyhow::Result<()> {
+pub fn process_encode(input: &str, format: Base64Format) -> anyhow::Result<String> {
     // `if` and `else` have incompatible types expected `Stdin`, found `File`
     // Box<dyn std::io::Read> 封装到box里面是一种常见的模式，用于处理不同类型
     let mut reader = get_reader(input)?;
@@ -18,12 +18,12 @@ pub fn process_encode(input: &str, format: Base64Format) -> anyhow::Result<()> {
         Base64Format::UrlSafe => URL_SAFE_NO_PAD.encode(buf),
         Base64Format::Standard => STANDARD.encode(buf),
     };
-    println!("{}", encoded);
+    // println!("{}", encoded);
 
-    Ok(())
+    Ok(encoded)
 }
 
-pub fn process_decode(input: &str, format: Base64Format) -> anyhow::Result<()> {
+pub fn process_decode(input: &str, format: Base64Format) -> anyhow::Result<Vec<u8>> {
     let mut reader = get_reader(input)?;
     let mut buf = String::new();
     reader.read_to_string(&mut buf)?;
@@ -35,10 +35,10 @@ pub fn process_decode(input: &str, format: Base64Format) -> anyhow::Result<()> {
         Base64Format::Standard => STANDARD.decode(buf)?,
     };
 
-    let decoded = String::from_utf8(decoded)?;
-    println!("{}", decoded);
+    // let decoded = String::from_utf8(decoded)?;
+    // println!("{}", decoded);
 
-    Ok(())
+    Ok(decoded)
 }
 
 #[cfg(test)]

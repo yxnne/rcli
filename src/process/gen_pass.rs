@@ -1,6 +1,5 @@
 use rand::prelude::IndexedRandom;
 use rand::seq::SliceRandom;
-use zxcvbn::zxcvbn;
 
 // 字节切片
 // b"..." ---> 生成带有 'static 生命周期的字节数组引用
@@ -15,7 +14,7 @@ pub fn process_genpass(
     lower: bool,
     number: bool,
     symbol: bool,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<String> {
     let mut rng = rand::rng();
     let mut password = Vec::new();
     let mut chars = Vec::new();
@@ -53,12 +52,5 @@ pub fn process_genpass(
 
     let pwd = String::from_utf8(password)?;
 
-    println!("生成密码: {}", pwd);
-
-    // 输出强度信息
-    let estimate = zxcvbn(&pwd, &[]);
-
-    eprintln!("强度评估: {}", estimate.score());
-
-    Ok(())
+    Ok(pwd)
 }

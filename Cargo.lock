@@ -735,6 +735,7 @@ dependencies = [
  "csv",
  "ed25519-dalek",
  "rand",
+ "rand_core 0.9.3",
  "serde",
  "serde_json",
  "serde_yaml",
